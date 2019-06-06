@@ -9,11 +9,12 @@ const oauth = require('./oauth/google.js');
 
 authRouter.post('/signup', (req, res, next) => {
   let user = new User(req.body);
-  user.save()
-    .then( (user) => {
-      req.token = user.generateToken();
+  user
+    .save()
+    .then((user) => {
       req.user = user;
-      res.set('token', req.token);
+      req.token = user.generateToken();
+      res.set('X-token', req.token);
       res.cookie('auth', req.token);
       res.send(req.token);
     })
@@ -25,15 +26,16 @@ authRouter.post('/signin', auth(), (req, res, next) => {
   res.send(req.token);
 });
 
-authRouter.get('/oauth', (req,res,next) => {
-  oauth.authorize(req)
-    .then( token => {
+authRouter.get('/oauth', (req, res, next) => {
+  oauth
+    .authorize(req)
+    .then((token) => {
       res.status(200).send(token);
     })
     .catch(next);
 });
 
-authRouter.post('/key', auth, (req,res,next) => {
+authRouter.post('/key', auth, (req, res, next) => {
   let key = req.user.generateKey();
   res.status(200).send(key);
 });
