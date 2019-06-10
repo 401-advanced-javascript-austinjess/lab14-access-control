@@ -106,6 +106,7 @@ users.methods.generateToken = function(type) {
 };
 
 users.methods.can = function(capability) {
+  if (!capability) return true;
   if (!this.acl || !this.acl.capabilities) return false;
   return this.acl.capabilities.includes(capability);
 };
