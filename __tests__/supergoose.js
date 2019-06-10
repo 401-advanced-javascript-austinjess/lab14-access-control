@@ -4,15 +4,13 @@
  * testing a Mongoose API
  */
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 600000;
-
 const mongoose = require('mongoose');
 const MongoMemoryServer = require('mongodb-memory-server').default;
 const supertest = require('supertest');
 
 let mongoServer;
 
-let supergoose = module.exports = {};
+let supergoose = (module.exports = {});
 /**
  * @server
  * @returns function that expects an express server
@@ -23,27 +21,25 @@ supergoose.server = (server) => supertest(server);
  * Typically used in Jest beforeAll hook
  */
 supergoose.startDB = async () => {
-  
   mongoServer = new MongoMemoryServer();
-  
+
   const mongoUri = await mongoServer.getConnectionString();
-  
+  console.log(mongoUri);
+
   const mongooseOptions = {
-    useNewUrlParser:true,
+    useNewUrlParser: true,
     useCreateIndex: true,
   };
-  
-  await mongoose.connect(mongoUri, mongooseOptions, (err) => {
-    if (err) console.error(err);
-  });
+
+  await mongoose.connect(mongoUri, mongooseOptions);
 };
 
 /**
  * Typically used in Jest afterAll hook
  */
-supergoose.stopDB = () => {
-  mongoose.disconnect();
-  mongoServer.stop();
+supergoose.stopDB = async () => {
+  await mongoose.disconnect();
+  await mongoServer.stop();
 };
 
 // Just so that it can live in the tests folder
