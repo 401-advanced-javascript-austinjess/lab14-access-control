@@ -3,7 +3,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const Role = require('./roles-model.js');
+// const Role = require('./roles-model.js');
 
 const SINGLE_USE_TOKENS = !!process.env.SINGLE_USE_TOKENS;
 const SECRET = process.env.SECRET || 'foobar';
@@ -68,13 +68,11 @@ users.statics.createFromOauth = function(email) {
 };
 
 users.statics.authenticateToken = async function(token) {
-  console.log(token);
   try {
     let parsedToken = jwt.verify(token, SECRET);
-    console.log('PARSED: ', parsedToken);
+    // console.log('PARSED: ', parsedToken);
     // SINGLE_USE_TOKENS && parsedToken.type !== 'key' && usedTokens.add(token);
     let query = { _id: parsedToken.id };
-    console.log(this.findOne(query));
     return this.findOne(query);
   } catch (e) {
     throw new Error('Invalid Token');
@@ -101,7 +99,7 @@ users.methods.generateToken = function(type) {
     id: this._id,
     // capabilities: capabilities[this.role],
     capabilities: (this.acl && this.acl.capabilities) || [],
-    // type: type || 'user',
+    type: type || 'user',
   };
 
   return jwt.sign(token, process.env.SECRET);

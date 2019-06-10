@@ -5,6 +5,7 @@ process.env.SECRET = 'test';
 const { startDB, stopDB } = require('../../supergoose.js');
 const auth = require('../../../src/auth/middleware.js');
 const Users = require('../../../src/auth/users-model.js');
+const Role = require('../../../src/auth/roles-model');
 
 let users = {
   admin: { username: 'admin', password: 'password', role: 'admin' },
@@ -12,7 +13,7 @@ let users = {
   user: { username: 'user', password: 'password', role: 'user' },
 };
 
-beforeAll(async (done) => {
+beforeAll(async () => {
   await startDB();
   await new Users(users.admin).save();
   await new Users(users.editor).save();
@@ -57,9 +58,10 @@ describe('Auth Middleware', () => {
     }); // it()
 
     it('fails a login for a user (admin) with an incorrect bearer token', () => {
+      const token = jwt.sign('5cf9d2fa24225793e5d5f89d', process.env.SECRET);
       let req = {
         headers: {
-          authorization: 'Bearer foo',
+          authorization: `Bearer ${token}`,
         },
       };
       let res = {};
@@ -83,12 +85,9 @@ describe('Auth Middleware', () => {
       let res = {};
       let next = jest.fn();
       let middleware = auth();
-      console.log(middleware());
 
       return middleware(req, res, next).then(() => {
-        console.log('RES: ', res);
         cachedToken = req.token;
-        console.log(cachedToken);
         expect(next).toHaveBeenCalledWith();
       });
     }); // it()

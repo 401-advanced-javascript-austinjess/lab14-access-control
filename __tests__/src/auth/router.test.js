@@ -35,7 +35,6 @@ describe('Auth Router', () => {
           .then((results) => {
             var token = jwt.verify(results.text, process.env.SECRET);
             id = token.id;
-            console.log(results.text);
             encodedToken = results.text;
             expect(token.id).toBeDefined();
             expect(token.capabilities).toBeDefined();

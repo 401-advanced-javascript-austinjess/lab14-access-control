@@ -1,6 +1,7 @@
 'use strict';
 
 const User = require('./users-model.js');
+const Role = require('./roles-model');
 
 module.exports = (capability) => {
   return (req, res, next) => {
@@ -16,7 +17,7 @@ module.exports = (capability) => {
         return _authError();
       }
     } catch (e) {
-      _authError();
+      return _authError();
     }
 
     function _authBasic(str) {
@@ -31,43 +32,28 @@ module.exports = (capability) => {
         .catch(_authError);
     }
 
-    // function _authBearer(authString) {
-    //   return User.authenticateToken(authString)
-    //     .then((user) => _authenticate(user))
-    //     .catch(_authError);
-    // }
-
     async function _authBearer(token) {
       let user = await User.authenticateToken(token);
+      // console.log('USER: ', user);
       await _authenticate(user);
     }
 
-    // function _authenticate(user) {
-    //   console.log('USER: ', user);
-    //   console.log('CAPABILITY: ', capability);
-    //   if (user && (capability || user.can(capability))) {
-    //     console.log('FINALLY HITTING THIS!!!!!!!!!!!!!!!');
-    //     req.user = user;
-    //     req.token = user.generateToken();
-    //     next();
-    //   } else {
-    //     _authError();
-    //   }
-    // }
-
     async function _authenticate(user) {
+      // console.log(user);
       if (!user) {
         return _authError();
       }
+      console.log('Capability!!!!!!!', user.can(capability));
       if (!user.can(capability)) {
         return _authError();
       }
+      // console.log('THIS ISNT RUNNING!!!!!!!!');
       req.user = user;
       req.token = user.generateToken();
       next();
     }
 
-    function _authError() {
+    async function _authError() {
       next({
         status: 401,
         statusMessage: 'Unauthorized',
