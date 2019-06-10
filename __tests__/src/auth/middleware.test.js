@@ -2,6 +2,8 @@
 
 process.env.SECRET = 'test';
 
+const jwt = require('jsonwebtoken');
+
 const { startDB, stopDB } = require('../../supergoose.js');
 const auth = require('../../../src/auth/middleware.js');
 const Users = require('../../../src/auth/users-model.js');
@@ -18,6 +20,7 @@ beforeAll(async () => {
   await new Users(users.admin).save();
   await new Users(users.editor).save();
   await new Users(users.user).save();
+  await new Role({ role: 'admin', capabilities: ['create', 'read', 'update', 'delete']}).save();
 });
 
 afterAll(stopDB);
@@ -68,12 +71,9 @@ describe('Auth Middleware', () => {
       let next = jest.fn();
       let middleware = auth();
 
-      // The token authorizer in the model throws an error, making it so
-      // the middleware doesn't return a promise but instead throws an
-      // error in the main catch block, so this assertion validates that
-      // behavior instead of a standard promise signature
-      middleware(req, res, next);
-      expect(next).toHaveBeenCalledWith(errorMessage);
+      middleware(req, res, next).then(() => {
+        expect(next).toHaveBeenCalledWith(errorMessage);
+      });
     }); // it()
 
     it('logs in an admin user with the right credentials', () => {
@@ -84,7 +84,7 @@ describe('Auth Middleware', () => {
       };
       let res = {};
       let next = jest.fn();
-      let middleware = auth();
+      let middleware = auth('delete');
 
       return middleware(req, res, next).then(() => {
         cachedToken = req.token;

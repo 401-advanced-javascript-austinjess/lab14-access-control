@@ -43,7 +43,6 @@ module.exports = (capability) => {
       if (!user) {
         return _authError();
       }
-      console.log('Capability!!!!!!!', user.can(capability));
       if (!user.can(capability)) {
         return _authError();
       }

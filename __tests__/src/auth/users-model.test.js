@@ -25,6 +25,14 @@ describe('The User Model', () => {
       // ASSERT
       expect(user).toBeDefined();
       expect(user.acl).toBeDefined();
+
+      // Missing capability - assume all users allowed
+      expect(user.can()).toBe(true);
+
+      expect(user.can('c')).toBe(true);
+      expect(user.can('r')).toBe(true);
+      expect(user.can('u')).toBe(true);
+      expect(user.can('d')).toBe(false);
     });
   });
 });
