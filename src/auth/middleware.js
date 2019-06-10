@@ -1,11 +1,10 @@
 'use strict';
 
 const User = require('./users-model.js');
+const Role = require('./roles-model');
 
 module.exports = (capability) => {
-  
   return (req, res, next) => {
-
     try {
       let [authType, authString] = req.headers.authorization.split(/\s+/);
 
@@ -18,43 +17,47 @@ module.exports = (capability) => {
         return _authError();
       }
     } catch (e) {
-      _authError();
+      return _authError();
     }
-
 
     function _authBasic(str) {
-    // str: am9objpqb2hubnk=
+      // str: am9objpqb2hubnk=
       let base64Buffer = Buffer.from(str, 'base64'); // <Buffer 01 02 ...>
-      let bufferString = base64Buffer.toString();    // john:mysecret
+      let bufferString = base64Buffer.toString(); // john:mysecret
       let [username, password] = bufferString.split(':'); // john='john'; mysecret='mysecret']
-      let auth = {username, password}; // { username:'john', password:'mysecret' }
+      let auth = { username, password }; // { username:'john', password:'mysecret' }
 
       return User.authenticateBasic(auth)
-        .then(user => _authenticate(user))
+        .then((user) => _authenticate(user))
         .catch(_authError);
     }
 
-    function _authBearer(authString) {
-      return User.authenticateToken(authString)
-        .then(user => _authenticate(user))
-        .catch(_authError);
+    async function _authBearer(token) {
+      let user = await User.authenticateToken(token);
+      // console.log('USER: ', user);
+      await _authenticate(user);
     }
 
-    function _authenticate(user) {
-      if ( user && (!capability || (user.can(capability))) ) {
-        req.user = user;
-        req.token = user.generateToken();
-        next();
+    async function _authenticate(user) {
+      // console.log(user);
+      if (!user) {
+        return _authError();
       }
-      else {
-        _authError();
+      if (!user.can(capability)) {
+        return _authError();
       }
+      // console.log('THIS ISNT RUNNING!!!!!!!!');
+      req.user = user;
+      req.token = user.generateToken();
+      next();
     }
 
-    function _authError() {
-      next('Invalid User ID/Password');
+    async function _authError() {
+      next({
+        status: 401,
+        statusMessage: 'Unauthorized',
+        message: 'Invalid Username/Password',
+      });
     }
-
   };
-  
 };

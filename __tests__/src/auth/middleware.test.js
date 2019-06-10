@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const { startDB, stopDB } = require('../../supergoose.js');
 const auth = require('../../../src/auth/middleware.js');
 const Users = require('../../../src/auth/users-model.js');
+const Role = require('../../../src/auth/roles-model');
 
 let users = {
   admin: { username: 'admin', password: 'password', role: 'admin' },
@@ -14,12 +15,15 @@ let users = {
   user: { username: 'user', password: 'password', role: 'user' },
 };
 
-beforeAll(async (done) => {
+beforeAll(async () => {
   await startDB();
   await new Users(users.admin).save();
   await new Users(users.editor).save();
   await new Users(users.user).save();
-  done();
+  await new Role({
+    role: 'admin',
+    capabilities: ['create', 'read', 'update', 'delete'],
+  }).save();
 });
 
 afterAll(stopDB);
@@ -35,7 +39,11 @@ describe('Auth Middleware', () => {
   // editor:password: ZWRpdG9yOnBhc3N3b3Jk
   // user:password: dXNlcjpwYXNzd29yZA==
 
-  let errorMessage = 'Invalid User ID/Password';
+  let errorMessage = {
+    status: 401,
+    statusMessage: 'Unauthorized',
+    message: 'Invalid Username/Password',
+  };
 
   describe('user authentication', () => {
     let cachedToken;
@@ -56,21 +64,19 @@ describe('Auth Middleware', () => {
     }); // it()
 
     it('fails a login for a user (admin) with an incorrect bearer token', () => {
+      const token = jwt.sign('5cf9d2fa24225793e5d5f89d', process.env.SECRET);
       let req = {
         headers: {
-          authorization: 'Bearer foo',
+          authorization: `Bearer ${token}`,
         },
       };
       let res = {};
       let next = jest.fn();
       let middleware = auth();
 
-      // The token authorizer in the model throws an error, making it so
-      // the middleware doesn't return a promise but instead throws an
-      // error in the main catch block, so this assertion validates that
-      // behavior instead of a standard promise signature
-      middleware(req, res, next);
-      expect(next).toHaveBeenCalledWith(errorMessage);
+      middleware(req, res, next).then(() => {
+        expect(next).toHaveBeenCalledWith(errorMessage);
+      });
     }); // it()
 
     it('logs in an admin user with the right credentials', () => {
@@ -81,7 +87,7 @@ describe('Auth Middleware', () => {
       };
       let res = {};
       let next = jest.fn();
-      let middleware = auth();
+      let middleware = auth('delete');
 
       return middleware(req, res, next).then(() => {
         cachedToken = req.token;
