@@ -11,8 +11,8 @@ const mockRequest = supergoose.server(server);
 
 const Role = require('../../../src/auth/roles-model');
 let roles = [
-  { role: 'admin', capabilities: ['read', 'write', 'add', 'delete'] },
-  { role: 'editor', capabilities: ['read', 'write', 'add'] },
+  { role: 'admin', capabilities: ['read', 'update', 'create', 'delete'] },
+  { role: 'editor', capabilities: ['read', 'update', 'create'] },
   { role: 'user', capabilities: ['read'] },
 ];
 let users = {
@@ -24,7 +24,7 @@ let users = {
 beforeAll(async () => {
   await supergoose.startDB();
   await Promise.all(
-    Object.values(roles).map(role => {
+    Object.values(roles).map((role) => {
       return new Role(role).save();
     })
   );
@@ -57,7 +57,6 @@ describe('Auth Router', () => {
           .post('/signin')
           .auth(users[userType].username, users[userType].password)
           .then((results) => {
-            //console.log('RESULTS: ', results.text);
             var token = jwt.verify(results.text, process.env.SECRET);
             expect(token.id).toEqual(id);
             expect(token.capabilities).toBeDefined();
@@ -69,7 +68,6 @@ describe('Auth Router', () => {
           .post('/signin')
           .set('Authorization', `Bearer ${encodedToken}`)
           .then((results) => {
-            //console.log(results);
             var token = jwt.verify(results.text, process.env.SECRET);
             expect(token.id).toEqual(id);
             expect(token.capabilities).toBeDefined();

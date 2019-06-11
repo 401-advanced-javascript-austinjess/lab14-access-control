@@ -20,7 +20,6 @@ describe('The User Model', () => {
 
       // ACT
       let user = await User.findOne({ username: 'k' });
-      console.log(user);
 
       // ASSERT
       expect(user).toBeDefined();
