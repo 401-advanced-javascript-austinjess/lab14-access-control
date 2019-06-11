@@ -15,7 +15,7 @@ const users = new mongoose.Schema(
       type: String,
       required: true,
       default: 'user',
-      enum: ['admin', 'editor', 'user'],
+      enum: ['superuser', 'admin', 'editor', 'user'],
     },
     // role: { type: mongoose.Types.ObjectId, ref: Role.schema },
   },

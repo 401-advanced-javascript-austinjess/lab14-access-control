@@ -11,12 +11,18 @@ const Role = require('../../../src/auth/roles-model');
 const User = require('../../../src/auth/users-model');
 
 let roles = [
+  { role: 'superuser', capabilities: ['read', 'update', 'create', 'delete'] },
   { role: 'admin', capabilities: ['read', 'update', 'create', 'delete'] },
   { role: 'editor', capabilities: ['read', 'update', 'create'] },
   { role: 'user', capabilities: ['read'] },
 ];
 
 let users = {
+  superuser: new User({
+    username: 'superuser',
+    password: 'password',
+    role: 'superuser',
+  }),
   admin: new User({ username: 'admin', password: 'password', role: 'admin' }),
   editor: new User({ username: 'editor', password: 'password', role: 'admin' }),
   user: new User({ username: 'user', password: 'password', role: 'user' }),
@@ -40,12 +46,6 @@ beforeAll(async () => {
 afterAll(supergoose.stopDB);
 
 describe('The Protected Routes API', () => {
-  let errorMessage = {
-    status: 401,
-    statusMessage: 'Unauthorized',
-    message: 'You dont have permission to access',
-  };
-
   it('allows for anyone to access the public route', async () => {
     return mockRequest.get('/public-stuff').expect(200);
   });
@@ -79,27 +79,66 @@ describe('The Protected Routes API', () => {
   });
 
   describe('/create-a-thing', () => {
-    it('returns 401 if not authenticated', async () => {});
-    it('returns 200 if create capability is present', async () => {});
+    it('returns 401 if not authenticated', async () => {
+      return mockRequest.post('/create-a-thing').expect(401);
+    });
+    it('returns 200 if create capability is present', async () => {
+      return mockRequest
+        .post('/create-a-thing')
+        .set('Authorization', `Bearer ${users.editor.generateToken()}`)
+        .expect(200);
+    });
   });
 
   describe('/update', () => {
-    it('returns 401 if not authenticated', async () => {});
-    it('returns 200 if update capability is present', async () => {});
+    it('returns 401 if not authenticated', async () => {
+      return mockRequest.put('/update').expect(401);
+    });
+    it('returns 200 if update capability is present', async () => {
+      return mockRequest
+        .put('/update')
+        .set('Authorization', `Bearer ${users.editor.generateToken()}`)
+        .expect(200);
+    });
   });
 
   describe('/jp', () => {
-    it('returns 401 if not authenticated', async () => {});
-    it('returns 200 if update capability is present', async () => {});
+    it('returns 401 if not authenticated', async () => {
+      return mockRequest.patch('/jp').expect(401);
+    });
+    it('returns 200 if update capability is present', async () => {
+      return mockRequest
+        .patch('/jp')
+        .set('Authorization', `Bearer ${users.admin.generateToken()}`)
+        .expect(200);
+    });
   });
 
   describe('/bye-bye', () => {
-    it('returns 401 if not authenticated', async () => {});
-    it('returns 200 if delete capability is present', async () => {});
+    it('returns 401 if not authenticated', async () => {
+      return mockRequest.delete('/bye-bye').expect(401);
+    });
+    it('returns 200 if delete capability is present', async () => {
+      return mockRequest
+        .delete('/bye-bye')
+        .set('Authorization', `Bearer ${users.admin.generateToken()}`);
+    });
   });
 
   describe('/everything', () => {
-    it('returns 401 if not authenticated', async () => {});
-    it('returns 200 if superuser capability is present', async () => {});
+    it('returns 401 if not authenticated', async () => {
+      return (
+        mockRequest
+          .get('/everything')
+          // .set('Authorization', `Bearer ${users.editor.generateToken()}`)
+          .expect(401)
+      );
+    });
+    it('returns 200 if superuser capability is present', async () => {
+      return mockRequest
+        .get('/everything')
+        .set('Authorization', `Bearer ${users.superuser.generateToken()}`)
+        .expect(200);
+    });
   });
 });

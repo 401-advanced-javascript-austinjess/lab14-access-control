@@ -40,6 +40,6 @@ router.delete('/bye-bye', auth('delete'), (req, res) => {
 });
 
 // require the superuser capability
-router.get('/everything', auth('superuser'), (req, res) => {
+router.get('/everything', auth('delete'), (req, res) => {
   res.send('Must be a SUPERUSER!');
 });
