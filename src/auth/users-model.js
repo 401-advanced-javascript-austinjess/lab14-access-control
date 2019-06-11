@@ -3,9 +3,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-// const Role = require('./roles-model.js');
 
-const SINGLE_USE_TOKENS = !!process.env.SINGLE_USE_TOKENS;
 const SECRET = process.env.SECRET || 'foobar';
 
 const users = new mongoose.Schema(

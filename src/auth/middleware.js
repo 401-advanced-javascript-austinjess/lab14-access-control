@@ -1,7 +1,6 @@
 'use strict';
 
 const User = require('./users-model.js');
-const Role = require('./roles-model');
 
 module.exports = (capability) => {
   return (req, res, next) => {

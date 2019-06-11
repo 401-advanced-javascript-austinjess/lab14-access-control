@@ -99,6 +99,7 @@ describe('Auth Middleware', () => {
     // but we're using an in-memory db instance, so we need a way to get the user ID
     // and token from a "good" login, and the previous passing test does provide that ...
     it('logs in an admin user with a correct bearer token', () => {
+      console.log(cachedToken);
       let req = {
         headers: {
           authorization: `Bearer ${cachedToken}`,
@@ -109,6 +110,7 @@ describe('Auth Middleware', () => {
       let middleware = auth();
 
       return middleware(req, res, next).then(() => {
+        console.log('TOKEN!!!!!!!!!!!!!!!', req.token);
         expect(next).toHaveBeenCalledWith();
       });
     }); // it()
